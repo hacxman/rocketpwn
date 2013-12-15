@@ -11,7 +11,7 @@ def main():
     pygame.init()
     pygame.display.set_caption('RocketPwn')
     mode = (800, 600)
-    #mode = (1366, 768)
+    mode = (1366, 768)
     FPS = 60
 
     screen = pygame.display.set_mode(map(int, mode))
@@ -20,18 +20,37 @@ def main():
     bg.fill(colors.t)
 
     ships = pygame.sprite.RenderUpdates()
-    bships = pygame.sprite.RenderUpdates()
     ui = pygame.sprite.RenderUpdates()
     with open('lvl/1') as f:
         lines = f.readlines()
 
-    lvl = map(lambda x: x.strip('\n').ljust(9, ' '), lines[1:])
-    for line in lvl:
+    _lvl = map(lambda x: x.strip('\n').ljust(9, ' '), lines[1:])
+    lvl = ['' for line in _lvl]
+
+    for line in _lvl:
+        for i, c in enumerate(line):
+            lvl[i] += c
         print line
+
+    print lvl
 
     s = mode[1] - 120
     map_sq = (mode[0] - (s + 100), 60, s, s)
-    pygame.draw.rect(bg, colors.r, map_sq, 1)
+    pygame.draw.rect(bg, colors.g, map_sq, 3)
+    tile_size = 1. * s / 9
+    ship_size = int(tile_size * 2 / 3)
+
+    for i in range(0, 9):
+        for j in range(0, 9):
+            tile_rect = pygame.rect.Rect(map_sq[0] + tile_size * i, map_sq[1] + tile_size * j, tile_size, tile_size)
+            rect = tile_rect.inflate(-4, -4)
+            if lvl[i][j] == '-':
+                pygame.draw.rect(bg, colors.g, rect, 2)
+            elif lvl[i][j] == 'T':
+                pygame.draw.rect(bg, colors.r, rect, 2)
+            elif lvl[i][j] == '>':
+                pygame.draw.rect(bg, colors.dr, rect, 2)
+                ship_init = rect.center
 
     screen.blit(bg, (0, 0))
     clock = pygame.time.Clock()
@@ -39,8 +58,8 @@ def main():
 
     thrust_progress = elements.Progress((0, 0), (mode[0], 30), colors.g)
     power_progress = elements.Progress((0, mode[1] - 30), (mode[0], 30), colors.dr)
-    ship = elements.Ship((400, 300), (0, 1))
-    dship = elements.Ship((100, 100), (0, 1), colors.r)
+    ship = elements.Ship(ship_init, (1, 0), size=ship_size)
+    dship = elements.Ship((100, 100), (0, 1), color=colors.r)
     ui.add(thrust_progress)
     ui.add(power_progress)
     ships.add(ship)
@@ -50,9 +69,12 @@ def main():
     ship.speed = spd
     dship.speed = spd
     ship.force = 0
-    nextforce = random.uniform(0.02, 0.08)
+    f_low, f_high = 0.02, 0.04
+    # hard?
+    # f_low, f_high = 0.01, 0.10
+    nextforce = random.uniform(f_low, f_high)
     thrust_interval, thrust_duration = 4000, 2000
-    thrust_counter, thrust_dcounter = 0, 0
+    thrust_counter, thrust_dcounter = 1500, 0
     ticks = 0
 
     while running:
@@ -62,12 +84,13 @@ def main():
         thrust_dcounter += time_passed
         if thrust_counter >= thrust_interval:
             ship.force = nextforce
-            nextforce = random.uniform(0.02, 0.08)
+            nextforce = random.uniform(f_low, f_high)
+            nextforce = 0.04
             thrust_counter = 0
             thrust_dcounter = 0
 
         if ship.force > 0:
-            ship.force -= 0.0005
+            ship.force -= 0.0002
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

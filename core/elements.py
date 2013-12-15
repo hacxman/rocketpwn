@@ -7,7 +7,7 @@ from vector import Vec2d
 
 
 class Ship(pygame.sprite.Sprite):
-    def __init__(self, init_pos, init_dir, color=colors.g):
+    def __init__(self, init_pos, init_dir, color=colors.g, size=None):
         pygame.sprite.Sprite.__init__(self)
         self._image = pygame.Surface((50, 50))
         self._image.fill((0, 0, 0))
@@ -17,6 +17,10 @@ class Ship(pygame.sprite.Sprite):
             color,
             [[25, 10], [5, 30], [45, 30]],
             5)
+
+        if size:
+            scaled_im = pygame.transform.smoothscale(self._image, (size, size))
+            self._image = scaled_im
 
         self.pos = Vec2d(init_pos)
         # movement direction
