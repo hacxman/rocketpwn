@@ -21,10 +21,17 @@ def main():
     pygame.display.flip()
 
     ships = pygame.sprite.RenderUpdates()
+    bships = pygame.sprite.RenderUpdates()
     ship = elements.Ship((400, 300), (0, 1))
     dship = elements.Ship((500, 300), (0, 1), colors.r)
     ships.add(ship)
     ships.add(dship)
+    for i in range(5):
+        for j in range(5):
+            bships.add(elements.Ship(
+                (100 + i * 45, 300 + j * 30),
+                (0, 1),
+                (40 * (i + 2), 40 * (j + 2), 30 * (j + 2))))
     running, moving = True, False
     spd = 0.50
     ship.speed = spd
@@ -60,9 +67,12 @@ def main():
         print "Ship dir:%f head:%f" % (ship.dir.angle, ship.heading.angle)
         print "Ship dir:%s head:%s" % (ship.dir, ship.heading)
 
-        ships.update(time_passed)
+        ships.update(time_passed, None)
+        bships.update(time_passed, ship.dir)
         ships.clear(screen, bg)
+        bships.clear(screen, bg)
         dirty = ships.draw(screen)
+        dirty += bships.draw(screen)
         pygame.display.update(dirty)
 
 

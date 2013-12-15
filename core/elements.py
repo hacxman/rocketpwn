@@ -37,7 +37,10 @@ class Ship(pygame.sprite.Sprite):
             self._image, self.heading.angle - 90)
         self.rect = self.image.get_rect(center=self.rect.center)
 
-    def update(self, time_passed):
+    def update(self, time_passed, new_heading):
+        if new_heading:
+            self.heading = new_heading
+
         self.render_rotation()
 
         self.speed *= 0.998
