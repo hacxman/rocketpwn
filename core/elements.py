@@ -43,8 +43,7 @@ class Ship(pygame.sprite.Sprite):
 
         self.render_rotation()
 
-        self.speed *= 0.998
-        self.force = 0.01
+        self.speed *= 0.999
 
         d = Vec2d(
             self.dir.x * self.speed,
@@ -61,7 +60,27 @@ class Ship(pygame.sprite.Sprite):
         d.x += math.cos(a) * self.force
         d.y += math.sin(a) * self.force
 
-        self.speed = min(2, d.length)
+        self.speed = min(3, d.length)
         self.dir.angle = math.degrees(math.atan2(d.y, d.x))
 
         super(Ship, self).update()
+
+
+class Progress(pygame.sprite.Sprite):
+    def __init__(self, init_pos, init_size, color=colors.g):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface(init_size)
+        self.image.fill((0, 0, 0))
+        self.image.set_colorkey((0, 0, 0))
+        pygame.draw.rect(
+            self.image,
+            color,
+            (0, 0, init_size[0], init_size[1]))
+        self.rect = self.image.get_rect(topleft=init_pos)
+
+    def update(self, progress):
+        #self.rect.x = self.rect.x - (self.rect.centerx * progress)
+        self.rect.x = - (self.rect.width * progress)
+        #self.rect.centery = self.pos.y
+
+        super(Progress, self).update()

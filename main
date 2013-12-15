@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import random
 
 import pygame
 
@@ -9,8 +10,8 @@ from core import elements
 def main():
     pygame.init()
     pygame.display.set_caption('RocketPwn')
-    mode = (1000, 700)
-    FPS = 100
+    mode = (1366, 768)
+    FPS = 60
 
     screen = pygame.display.set_mode(map(int, mode))
 
@@ -22,8 +23,14 @@ def main():
 
     ships = pygame.sprite.RenderUpdates()
     bships = pygame.sprite.RenderUpdates()
+    ui = pygame.sprite.RenderUpdates()
+
+    thrust_progress = elements.Progress((0, 0), (mode[0], 30), colors.g)
+    power_progress = elements.Progress((0, mode[1] - 30), (mode[0], 30), colors.dr)
     ship = elements.Ship((400, 300), (0, 1))
     dship = elements.Ship((500, 300), (0, 1), colors.r)
+    ui.add(thrust_progress)
+    ui.add(power_progress)
     ships.add(ship)
     ships.add(dship)
     for i in range(5):
@@ -33,13 +40,29 @@ def main():
                 (0, 1),
                 (40 * (i + 2), 40 * (j + 2), 30 * (j + 2))))
     running, moving = True, False
-    spd = 0.50
+    spd = 0.00
     ship.speed = spd
     dship.speed = spd
     ship.force = 0
+    nextforce = random.uniform(0.02, 0.08)
+    thrust_interval, thrust_duration = 4000, 2000
+    thrust_counter, thrust_dcounter = 0, 0
+    ticks = 0
 
     while running:
         time_passed = clock.tick(FPS)
+        ticks += time_passed
+        thrust_counter += time_passed
+        thrust_dcounter += time_passed
+        if thrust_counter >= thrust_interval:
+            #ship.force = 0.10
+            ship.force = nextforce
+            nextforce = random.uniform(0.02, 0.08)
+            thrust_counter = 0
+            thrust_dcounter = 0
+
+        if ship.force > 0:
+            ship.force -= 0.0005
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -58,20 +81,29 @@ def main():
                     #ship.force += 2
 
         if moving:
-            ship.heading.rotate(2)
+            ship.heading.rotate(5)
 
-        ship.force = 0.01
         dship.heading = ship.dir
 
         print "s=%f f=%f" % (ship.speed, ship.force)
         print "Ship dir:%f head:%f" % (ship.dir.angle, ship.heading.angle)
         print "Ship dir:%s head:%s" % (ship.dir, ship.heading)
 
+        thrust_progress.update(1. * thrust_counter / thrust_interval)
+        if ship.force <= 0:
+            power_progress.update(1 - 10. * nextforce)
+        else:
+            power_progress.update(1 - 10. * ship.force)
+        print 'ticks', ticks
+        print 'tp', thrust_counter / thrust_interval
+        print 'dt', time_passed
         ships.update(time_passed, None)
         bships.update(time_passed, ship.dir)
+        ui.clear(screen, bg)
         ships.clear(screen, bg)
         bships.clear(screen, bg)
-        dirty = ships.draw(screen)
+        dirty = ui.draw(screen)
+        dirty += ships.draw(screen)
         dirty += bships.draw(screen)
         pygame.display.update(dirty)
 
