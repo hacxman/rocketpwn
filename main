@@ -45,12 +45,6 @@ def main():
     ui.add(power_progress)
     ships.add(ship)
     ships.add(dship)
-    for i in range(5):
-        for j in range(5):
-            bships.add(elements.Ship(
-                (100 + i * 45, 300 + j * 30),
-                (0, 1),
-                (40 * (i + 2), 40 * (j + 2), 30 * (j + 2))))
     running, moving = True, False
     spd = 0.00
     ship.speed = spd
@@ -106,13 +100,10 @@ def main():
         print 'tp', thrust_counter / thrust_interval
         print 'dt', time_passed
         ships.update(time_passed, None)
-        bships.update(time_passed, ship.dir)
         ui.clear(screen, bg)
         ships.clear(screen, bg)
-        bships.clear(screen, bg)
         dirty = ui.draw(screen)
         dirty += ships.draw(screen)
-        dirty += bships.draw(screen)
         pygame.display.update(dirty)
 
 
