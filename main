@@ -10,25 +10,37 @@ from core import elements
 def main():
     pygame.init()
     pygame.display.set_caption('RocketPwn')
-    mode = (1366, 768)
+    mode = (800, 600)
+    #mode = (1366, 768)
     FPS = 60
 
     screen = pygame.display.set_mode(map(int, mode))
 
     bg = pygame.Surface(mode)
     bg.fill(colors.t)
-    screen.blit(bg, (0, 0))
-    clock = pygame.time.Clock()
-    pygame.display.flip()
 
     ships = pygame.sprite.RenderUpdates()
     bships = pygame.sprite.RenderUpdates()
     ui = pygame.sprite.RenderUpdates()
+    with open('lvl/1') as f:
+        lines = f.readlines()
+
+    lvl = map(lambda x: x.strip('\n').ljust(9, ' '), lines[1:])
+    for line in lvl:
+        print line
+
+    s = mode[1] - 120
+    map_sq = (mode[0] - (s + 100), 60, s, s)
+    pygame.draw.rect(bg, colors.r, map_sq, 1)
+
+    screen.blit(bg, (0, 0))
+    clock = pygame.time.Clock()
+    pygame.display.flip()
 
     thrust_progress = elements.Progress((0, 0), (mode[0], 30), colors.g)
     power_progress = elements.Progress((0, mode[1] - 30), (mode[0], 30), colors.dr)
     ship = elements.Ship((400, 300), (0, 1))
-    dship = elements.Ship((500, 300), (0, 1), colors.r)
+    dship = elements.Ship((100, 100), (0, 1), colors.r)
     ui.add(thrust_progress)
     ui.add(power_progress)
     ships.add(ship)
@@ -55,7 +67,6 @@ def main():
         thrust_counter += time_passed
         thrust_dcounter += time_passed
         if thrust_counter >= thrust_interval:
-            #ship.force = 0.10
             ship.force = nextforce
             nextforce = random.uniform(0.02, 0.08)
             thrust_counter = 0
@@ -76,9 +87,6 @@ def main():
                     moving = True
             if event.type == pygame.KEYUP:
                 moving = False
-                #ship.force = random.uniform(0, 1)
-                #if ship.force - ship.speed < 1:
-                    #ship.force += 2
 
         if moving:
             ship.heading.rotate(5)
