@@ -1,0 +1,70 @@
+#!/usr/bin/python
+
+import pygame
+
+from core import colors
+from core import elements
+
+
+def main():
+    pygame.init()
+    pygame.display.set_caption('RocketPwn')
+    mode = (1000, 700)
+    FPS = 100
+
+    screen = pygame.display.set_mode(map(int, mode))
+
+    bg = pygame.Surface(mode)
+    bg.fill(colors.t)
+    screen.blit(bg, (0, 0))
+    clock = pygame.time.Clock()
+    pygame.display.flip()
+
+    ships = pygame.sprite.RenderUpdates()
+    ship = elements.Ship((400, 300), (0, 1))
+    dship = elements.Ship((500, 300), (0, 1), colors.r)
+    ships.add(ship)
+    ships.add(dship)
+    running, moving = True, False
+    spd = 0.50
+    ship.speed = spd
+    dship.speed = spd
+    ship.force = 0
+
+    while running:
+        time_passed = clock.tick(FPS)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                break
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_ESCAPE, pygame.K_q):
+                    running = False
+                    break
+                if event.key == pygame.K_SPACE:
+                    moving = True
+            if event.type == pygame.KEYUP:
+                moving = False
+                #ship.force = random.uniform(0, 1)
+                #if ship.force - ship.speed < 1:
+                    #ship.force += 2
+
+        if moving:
+            ship.heading.rotate(2)
+
+        ship.force = 0.01
+        dship.heading = ship.dir
+
+        print "s=%f f=%f" % (ship.speed, ship.force)
+        print "Ship dir:%f head:%f" % (ship.dir.angle, ship.heading.angle)
+        print "Ship dir:%s head:%s" % (ship.dir, ship.heading)
+
+        ships.update(time_passed)
+        ships.clear(screen, bg)
+        dirty = ships.draw(screen)
+        pygame.display.update(dirty)
+
+
+if __name__ == '__main__':
+    main()
