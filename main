@@ -6,6 +6,9 @@ import pygame
 from core import colors
 from core import elements
 
+dbg = True
+# dbg = False
+
 
 def main():
     pygame.init()
@@ -30,20 +33,22 @@ def main():
     for line in _lvl:
         for i, c in enumerate(line):
             lvl[i] += c
-        print line
-
-    print lvl
+        if dbg:
+            print(line)
 
     s = mode[1] - 120
     map_sq = (mode[0] - (s + 100), 60, s, s)
     pygame.draw.rect(bg, colors.g, map_sq, 3)
-    tile_size = 1. * s / 9
+    tile_size = int(1. * s / 9)
     ship_size = int(tile_size * 2 / 3)
+    if dbg:
+        print("Tile size: {}".format(tile_size))
+        print("Ship size: {}".format(ship_size))
 
     for i in range(0, 9):
         for j in range(0, 9):
             tile_rect = pygame.rect.Rect(map_sq[0] + tile_size * i, map_sq[1] + tile_size * j, tile_size, tile_size)
-            rect = tile_rect.inflate(-4, -4)
+            rect = tile_rect.inflate(-6, -6)
             if lvl[i][j] == '-':
                 pygame.draw.rect(bg, colors.g, rect, 2)
             elif lvl[i][j] == 'T':
@@ -59,15 +64,12 @@ def main():
     thrust_progress = elements.Progress((0, 0), (mode[0], 30), colors.g)
     power_progress = elements.Progress((0, mode[1] - 30), (mode[0], 30), colors.dr)
     ship = elements.Ship(ship_init, (1, 0), size=ship_size)
-    dship = elements.Ship((100, 100), (0, 1), color=colors.r)
+    dship = elements.Ship((200, 200), (0, 1), color=colors.r, size=ship_size * 2)
     ui.add(thrust_progress)
     ui.add(power_progress)
     ships.add(ship)
     ships.add(dship)
     running, moving = True, False
-    spd = 0.00
-    ship.speed = spd
-    dship.speed = spd
     ship.force = 0
     f_low, f_high = 0.02, 0.04
     # hard?
@@ -110,18 +112,21 @@ def main():
 
         dship.heading = ship.dir
 
-        print "s=%f f=%f" % (ship.speed, ship.force)
-        print "Ship dir:%f head:%f" % (ship.dir.angle, ship.heading.angle)
-        print "Ship dir:%s head:%s" % (ship.dir, ship.heading)
+        if dbg:
+            print "s=%f f=%f" % (ship.speed, ship.force)
+            print "Ship dir:%f head:%f" % (ship.dir.angle, ship.heading.angle)
+            print "Ship dir:%s head:%s" % (ship.dir, ship.heading)
 
         thrust_progress.update(1. * thrust_counter / thrust_interval)
         if ship.force <= 0:
             power_progress.update(1 - 10. * nextforce)
         else:
             power_progress.update(1 - 10. * ship.force)
-        print 'ticks', ticks
-        print 'tp', thrust_counter / thrust_interval
-        print 'dt', time_passed
+
+        if dbg:
+            print 'ticks', ticks
+            print 'tp', thrust_counter / thrust_interval
+            print 'dt', time_passed
         ships.update(time_passed, None)
         ui.clear(screen, bg)
         ships.clear(screen, bg)

@@ -9,14 +9,14 @@ from vector import Vec2d
 class Ship(pygame.sprite.Sprite):
     def __init__(self, init_pos, init_dir, color=colors.g, size=None):
         pygame.sprite.Sprite.__init__(self)
-        self._image = pygame.Surface((50, 50))
+        self._image = pygame.Surface((500, 500))
         self._image.fill((0, 0, 0))
         self._image.set_colorkey((0, 0, 0))
         pygame.draw.polygon(
             self._image,
             color,
-            [[25, 10], [5, 30], [45, 30]],
-            5)
+            [[250, 100], [50, 300], [450, 300]],
+            40)
 
         if size:
             scaled_im = pygame.transform.smoothscale(self._image, (size, size))
