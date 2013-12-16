@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import os
 import random
 import argparse
 
@@ -11,8 +12,6 @@ dbg = True
 dbg = False
 dbg_detect = False
 
-def collision():
-    print 'X'
 
 def main(mapfile=None):
     pygame.init()
@@ -26,23 +25,15 @@ def main(mapfile=None):
     bg = pygame.Surface(mode)
     bg.fill(colors.t)
 
-    ships = pygame.sprite.RenderUpdates()
     ui = pygame.sprite.RenderUpdates()
-    tiles  = pygame.sprite.RenderUpdates()
 
     if not mapfile:
         mapfile = 'lvl/1'
-    with open(mapfile) as f:
-        lines = f.readlines()
 
-    _lvl = map(lambda x: x.strip('\n').ljust(9, ' '), lines[1:])
-    lvl = ['' for line in _lvl]
-
-    for line in _lvl:
-        for i, c in enumerate(line):
-            lvl[i] += c
-        if dbg:
-            print(line)
+    num_lvl = 1
+    l = os.path.split(mapfile)[-1]
+    if l.isdigit():
+        num_lvl = int(l)
 
     s = mode[1] - 120
     map_sq = pygame.rect.Rect(mode[0] - (s + 100), 60, s, s)
@@ -54,39 +45,73 @@ def main(mapfile=None):
         print("Tile size: {}".format(tile_size))
         print("Ship size: {}".format(ship_size))
 
-    for i in range(0, 9):
-        for j in range(0, 9):
-            rect = pygame.rect.Rect(map_sq[0] + tile_size * i, map_sq[1] + tile_size * j, tile_size, tile_size)
-            t = elements.Tile(rect, colors.t)
+    def load_level(mapfile):
+        ships = pygame.sprite.RenderUpdates()
+        tiles = pygame.sprite.RenderUpdates()
 
-            if lvl[i][j] == '-':
-                t = elements.Tile(rect, colors.g)
-            elif lvl[i][j] == 'T':
-                t = elements.Tile(rect, colors.r)
-            elif lvl[i][j] == '>':
-                t = elements.Tile(rect, colors.dr)
-                ship_init = rect.center
+        if not os.path.isfile(mapfile):
+            mapfile = 'lvl/1'
 
-            t.coords = (i, j)
-            tiles.add(t)
+        with open(mapfile) as f:
+            lines = f.readlines()
+
+        _lvl = map(lambda x: x.strip('\n').ljust(9, ' '), lines[1:])
+        lvl = ['' for line in _lvl]
+
+        for line in _lvl:
+            for i, c in enumerate(line):
+                lvl[i] += c
+            if dbg:
+                print(line)
+
+        for i in range(0, 9):
+                for j in range(0, 9):
+                    rect = pygame.rect.Rect(map_sq[0] + tile_size * i, map_sq[1] + tile_size * j, tile_size, tile_size)
+                    t = elements.Tile(rect, colors.t)
+
+                    if lvl[i][j] == '-':
+                        t = elements.Tile(rect, colors.g)
+                    elif lvl[i][j] == 'T':
+                        t = elements.Tile(rect, colors.r)
+                    elif lvl[i][j] == '>':
+                        t = elements.Tile(rect, colors.dr)
+                        ship_init = rect.center
+
+                    t.coords = (i, j)
+                    tiles.add(t)
+
+        ship = elements.Ship(ship_init, (1, 0), size=ship_size)
+        dship = elements.Ship((200, 200), (0, 1), color=colors.r, size=ship_size * 2)
+        ships.add(ship)
+        ships.add(dship)
+
+        return ship, dship, ships, lvl, tiles
+
+    ship, dship, ships, lvl, tiles = load_level(mapfile)
 
     thrust_progress = elements.Progress((0, 0), (mode[0], 30), colors.g)
     power_progress = elements.Progress((0, mode[1] - 30), (mode[0], 30), colors.dr)
-    ship = elements.Ship(ship_init, (1, 0), size=ship_size)
-    dship = elements.Ship((200, 200), (0, 1), color=colors.r, size=ship_size * 2)
+    #ship = elements.Ship(ship_init, (1, 0), size=ship_size)
+    #dship = elements.Ship((200, 200), (0, 1), color=colors.r, size=ship_size * 2)
     ui.add(thrust_progress)
     ui.add(power_progress)
-    ships.add(ship)
-    ships.add(dship)
     running, moving = True, False
-    ship.force = 0
+    #ship.force = 0
     f_low, f_high = 0.02, 0.03
     # hard?
     # f_low, f_high = 0.01, 0.10
+
     nextforce = random.uniform(f_low, f_high)
-    thrust_interval, thrust_duration = 4000, 2000
-    thrust_counter = 2500
+    s_thrust_interval = 4000
+    s_thrust_counter = 3000
+    s_thrust_duration = 2000
+    thrust_interval, thrust_duration = s_thrust_interval, s_thrust_duration
+    thrust_counter = s_thrust_counter
+    crash_counter, crash_delay = 0, 50
     ticks = 0
+    crashed = False
+    won = False
+    nextlevel = False
 
     screen.blit(bg, (0, 0))
     clock = pygame.time.Clock()
@@ -139,25 +164,58 @@ def main(mapfile=None):
             print "Ship dir:%f head:%f" % (ship.dir.angle, ship.heading.angle)
             print "Ship dir:%s head:%s" % (ship.dir, ship.heading)
 
-        thrust_progress.update(1. * thrust_counter / thrust_interval)
-        if ship.force <= 0:
-            power_progress.update(1 - 10. * nextforce)
-        else:
-            power_progress.update(1 - 10. * ship.force)
-
         if dbg:
             print 'ticks', ticks
             print 'tp', thrust_counter / thrust_interval
             print 'dt', time_passed
-        ships.update(time_passed, None)
+
+        if crashed:
+            if crash_counter >= crash_delay:
+                crashed = False
+                crash_counter = 0
+                ship, dship, ships, lvl, tiles = load_level(mapfile)
+                nextforce = random.uniform(f_low, f_high)
+                thrust_interval, thrust_duration = s_thrust_interval, s_thrust_duration
+                thrust_counter = s_thrust_counter
+                screen.blit(bg, (0, 0))
+                pygame.display.flip()
+
+            crash_counter += 1
+
+        else:
+            ships.update(time_passed, None)
+            thrust_progress.update(1. * thrust_counter / thrust_interval)
+            if ship.force <= 0:
+                power_progress.update(1 - 10. * nextforce)
+            else:
+                power_progress.update(1 - 10. * ship.force)
+
+        if nextlevel:
+            num_lvl += 1
+            mapfile = 'lvl/{}'.format(num_lvl)
+            ship, dship, ships, lvl, tiles = load_level(mapfile)
+            nextforce = random.uniform(f_low, f_high)
+            thrust_interval, thrust_duration = s_thrust_interval, s_thrust_duration
+            #thrust_counter = 5000
+            thrust_counter = s_thrust_counter
+            nextlevel = False
+            screen.blit(bg, (0, 0))
+            pygame.display.flip()
 
         for point in ship.triangle_points():
             if not map_sq.collidepoint(point):
-                collision()
+                crashed = True
 
             for tile in tiles:
-                if tile.sub.collidepoint(point):
-                    print tile.coords
+                #if tile.sub.collidepoint(point):
+                if tile.crect.collidepoint(point):
+                    c = lvl[tile.coords[0]][tile.coords[1]]
+                    if c == '-':
+                        crashed = True
+                    elif c == 'T':
+                        nextlevel = True
+
+                    break
 
         ui.clear(screen, bg)
         tiles.clear(screen, bg)

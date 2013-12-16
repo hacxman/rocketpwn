@@ -46,7 +46,7 @@ class Ship(pygame.sprite.Sprite):
         self.rect.center = init_pos
 
         self.render_rotation()
-        self.rotate_points(self.heading.angle-90)
+        self.rotate_points(self.heading.angle - 90)
 
     def rotate(self, byangle):
         self.heading.rotate(byangle)
@@ -66,7 +66,6 @@ class Ship(pygame.sprite.Sprite):
         rot_rect = orig_rect.copy()
         rot_rect.center = rot_image.get_rect().center
         self.image = rot_image.subsurface(rot_rect).copy()
-        self.rect = rot_rect
         self.rect = self.image.get_rect(center=self.rect.center)
 
     def update(self, time_passed, new_heading):
@@ -138,6 +137,8 @@ class Tile(pygame.sprite.Sprite):
             border)
         self.rect = self.image.get_rect(topleft=rect.topleft)
         self.sub.topleft = self.rect.topleft
+        # collision rect
+        self.crect = self.rect.inflate(-2, -2)
 
     def update(self):
         super(Tile, self).update()
