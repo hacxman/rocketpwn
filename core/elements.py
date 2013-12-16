@@ -3,24 +3,35 @@ import math
 import pygame
 
 import colors
+from utils import rot_point
 from vector import Vec2d
 
 
 class Ship(pygame.sprite.Sprite):
-    def __init__(self, init_pos, init_dir, color=colors.g, size=None):
+    def __init__(self, init_pos, init_dir, color=colors.g, size=500):
         pygame.sprite.Sprite.__init__(self)
         self._image = pygame.Surface((500, 500))
         self._image.fill((0, 0, 0))
         self._image.set_colorkey((0, 0, 0))
+        self.ta = (250, 100)
+        self.tb = (50, 300)
+        self.tc = (450, 300)
+
         pygame.draw.polygon(
             self._image,
             color,
-            [[250, 100], [50, 300], [450, 300]],
+            [self.ta, self.tb, self.tc],
             40)
 
         if size:
+            scale = 500. / size
+
             scaled_im = pygame.transform.smoothscale(self._image, (size, size))
             self._image = scaled_im
+
+            self.ta = (250 / scale, 100 / scale)
+            self.tb = (50 / scale, 300 / scale)
+            self.tc = (450 / scale, 300 / scale)
 
         self.pos = Vec2d(init_pos)
         # movement direction
@@ -35,8 +46,29 @@ class Ship(pygame.sprite.Sprite):
         self.rect.center = init_pos
 
         self.render_rotation()
+        self.rotate_points(self.heading.angle-90)
+
+    def rotate(self, byangle):
+        self.heading.rotate(byangle)
+        self.rotate_points(byangle)
+
+    def rotate_points(self, byangle):
+        imrect = self.image.get_rect()
+        rotc = imrect.center
+        a = -byangle
+        self.ta = rot_point(self.ta, rotc, a)
+        self.tb = rot_point(self.tb, rotc, a)
+        self.tc = rot_point(self.tc, rotc, a)
 
     def render_rotation(self):
+        orig_rect = self._image.get_rect()
+        rot_image = pygame.transform.rotate(self._image, self.heading.angle - 90)
+        rot_rect = orig_rect.copy()
+        rot_rect.center = rot_image.get_rect().center
+        self.image = rot_image.subsurface(rot_rect).copy()
+        self.rect = rot_rect
+
+        return
         self.image = pygame.transform.rotate(
             self._image, self.heading.angle - 90)
         self.rect = self.image.get_rect(center=self.rect.center)

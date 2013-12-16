@@ -8,21 +8,21 @@ from core import colors
 from core import elements
 
 dbg = True
-# dbg = False
+dbg = False
+dbg_detect = False
 
 
 def main(mapfile=None):
     pygame.init()
     pygame.display.set_caption('RocketPwn')
     mode = (800, 600)
-    mode = (1366, 768)
+    #mode = (1366, 768)
     FPS = 60
 
     screen = pygame.display.set_mode(map(int, mode))
 
     bg = pygame.Surface(mode)
     bg.fill(colors.t)
-
 
     ships = pygame.sprite.RenderUpdates()
     ui = pygame.sprite.RenderUpdates()
@@ -61,10 +61,6 @@ def main(mapfile=None):
                 pygame.draw.rect(bg, colors.dr, rect, 2)
                 ship_init = rect.center
 
-    screen.blit(bg, (0, 0))
-    clock = pygame.time.Clock()
-    pygame.display.flip()
-
     thrust_progress = elements.Progress((0, 0), (mode[0], 30), colors.g)
     power_progress = elements.Progress((0, mode[1] - 30), (mode[0], 30), colors.dr)
     ship = elements.Ship(ship_init, (1, 0), size=ship_size)
@@ -83,7 +79,26 @@ def main(mapfile=None):
     thrust_counter = 2500
     ticks = 0
 
+    t = ship.ta
+    pygame.draw.circle(bg, colors.r, (int(t[0]) + ship.rect.x, int(t[1]) + ship.rect.y), 5, 2)
+    screen.blit(bg, (0, 0))
+    clock = pygame.time.Clock()
+    pygame.display.flip()
+
     while running:
+        if dbg_detect:
+            print map(lambda (x, y): (round(x, 4), round(y)), [ship.ta, ship.tb, ship.tc])
+            print ship.image.get_rect()
+            ox = ship.rect.x + 0
+            oy = ship.rect.y + 0
+            pygame.draw.polygon(
+                screen,
+                colors.r,
+                map(lambda (x, y): (x + ox, y + oy), [ship.ta, ship.tb, ship.tc]),
+                1)
+
+            pygame.display.flip()
+
         time_passed = clock.tick(FPS)
         ticks += time_passed
         thrust_counter += time_passed
@@ -110,7 +125,7 @@ def main(mapfile=None):
                 moving = False
 
         if moving:
-            ship.heading.rotate(5)
+            ship.rotate(5)
 
         dship.heading = ship.dir
 
