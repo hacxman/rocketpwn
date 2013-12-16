@@ -72,6 +72,8 @@ def main(mapfile=None):
 
                     if lvl[i][j] == '-':
                         t = elements.Tile(rect, colors.g)
+                    if lvl[i][j] == 'b':
+                        t = elements.Tile(rect, colors.b)
                     elif lvl[i][j] == 'T':
                         t = elements.Tile(rect, colors.r)
                     elif lvl[i][j] == '>':
