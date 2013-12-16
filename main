@@ -50,6 +50,7 @@ def main(mapfile=None):
         tiles = pygame.sprite.RenderUpdates()
 
         if not os.path.isfile(mapfile):
+            print('Map {} not found'.format(mapfile))
             mapfile = 'lvl/1'
 
         with open(mapfile) as f:
