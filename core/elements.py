@@ -67,10 +67,6 @@ class Ship(pygame.sprite.Sprite):
         rot_rect.center = rot_image.get_rect().center
         self.image = rot_image.subsurface(rot_rect).copy()
         self.rect = rot_rect
-
-        return
-        self.image = pygame.transform.rotate(
-            self._image, self.heading.angle - 90)
         self.rect = self.image.get_rect(center=self.rect.center)
 
     def update(self, time_passed, new_heading):
@@ -101,6 +97,12 @@ class Ship(pygame.sprite.Sprite):
 
         super(Ship, self).update()
 
+    def triangle_points(self):
+        ox = self.rect.x
+        oy = self.rect.y
+        return map(lambda (x, y): (x + ox, y + oy),
+                   [self.ta, self.tb, self.tc])
+
 
 class Progress(pygame.sprite.Sprite):
     def __init__(self, init_pos, init_size, color=colors.g):
@@ -115,8 +117,22 @@ class Progress(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=init_pos)
 
     def update(self, progress):
-        #self.rect.x = self.rect.x - (self.rect.centerx * progress)
         self.rect.x = - (self.rect.width * progress)
-        #self.rect.centery = self.pos.y
 
         super(Progress, self).update()
+
+
+class Tile(pygame.sprite.Sprite):
+    def __init__(self, init_pos, init_size, color=colors.r):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface(init_size)
+        self.image.fill((0, 0, 0))
+        self.image.set_colorkey((0, 0, 0))
+        pygame.draw.rect(
+            self.image,
+            color.t,
+            (0, 0, init_size[0], init_size[1]))
+        self.rect = self.image.get_rect(topleft=init_pos)
+
+    def update(self):
+        super(Tile, self).update()

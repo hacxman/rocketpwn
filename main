@@ -11,6 +11,8 @@ dbg = True
 dbg = False
 dbg_detect = False
 
+def collision():
+    print 'X'
 
 def main(mapfile=None):
     pygame.init()
@@ -41,7 +43,7 @@ def main(mapfile=None):
             print(line)
 
     s = mode[1] - 120
-    map_sq = (mode[0] - (s + 100), 60, s, s)
+    map_sq = pygame.rect.Rect(mode[0] - (s + 100), 60, s, s)
     pygame.draw.rect(bg, colors.g, map_sq, 3)
     tile_size = int(1. * s / 9)
     ship_size = int(tile_size * 2 / 3)
@@ -79,8 +81,6 @@ def main(mapfile=None):
     thrust_counter = 2500
     ticks = 0
 
-    t = ship.ta
-    pygame.draw.circle(bg, colors.r, (int(t[0]) + ship.rect.x, int(t[1]) + ship.rect.y), 5, 2)
     screen.blit(bg, (0, 0))
     clock = pygame.time.Clock()
     pygame.display.flip()
@@ -89,12 +89,10 @@ def main(mapfile=None):
         if dbg_detect:
             print map(lambda (x, y): (round(x, 4), round(y)), [ship.ta, ship.tb, ship.tc])
             print ship.image.get_rect()
-            ox = ship.rect.x + 0
-            oy = ship.rect.y + 0
             pygame.draw.polygon(
                 screen,
                 colors.r,
-                map(lambda (x, y): (x + ox, y + oy), [ship.ta, ship.tb, ship.tc]),
+                ship.triangle_points(),
                 1)
 
             pygame.display.flip()
@@ -145,6 +143,11 @@ def main(mapfile=None):
             print 'tp', thrust_counter / thrust_interval
             print 'dt', time_passed
         ships.update(time_passed, None)
+
+        for point in ship.triangle_points():
+            if not map_sq.collidepoint(point):
+                collision()
+
         ui.clear(screen, bg)
         ships.clear(screen, bg)
         dirty = ui.draw(screen)
