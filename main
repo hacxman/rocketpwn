@@ -17,7 +17,7 @@ def main(mapfile=None):
     pygame.init()
     pygame.display.set_caption('RocketPwn')
     mode = (800, 600)
-    #mode = (1366, 768)
+    mode = (1366, 768)
     FPS = 60
 
     screen = pygame.display.set_mode(map(int, mode))
@@ -82,7 +82,8 @@ def main(mapfile=None):
                     tiles.add(t)
 
         ship = elements.Ship(ship_init, (1, 0), size=ship_size)
-        dship = elements.Ship((200, 200), (0, 1), color=colors.r, size=ship_size * 2)
+        lrect = pygame.rect.Rect(0, 30, map_sq.topleft[0], mode[1])
+        dship = elements.Ship((lrect.centerx, lrect.height/3), (0, 1), color=colors.r, size=ship_size * 2)
         ships.add(ship)
         ships.add(dship)
 
@@ -92,12 +93,9 @@ def main(mapfile=None):
 
     thrust_progress = elements.Progress((0, 0), (mode[0], 30), colors.g)
     power_progress = elements.Progress((0, mode[1] - 30), (mode[0], 30), colors.dr)
-    #ship = elements.Ship(ship_init, (1, 0), size=ship_size)
-    #dship = elements.Ship((200, 200), (0, 1), color=colors.r, size=ship_size * 2)
     ui.add(thrust_progress)
     ui.add(power_progress)
     running, moving = True, False
-    #ship.force = 0
     f_low, f_high = 0.02, 0.03
     # hard?
     # f_low, f_high = 0.01, 0.10
@@ -197,7 +195,6 @@ def main(mapfile=None):
             ship, dship, ships, lvl, tiles = load_level(mapfile)
             nextforce = random.uniform(f_low, f_high)
             thrust_interval, thrust_duration = s_thrust_interval, s_thrust_duration
-            #thrust_counter = 5000
             thrust_counter = s_thrust_counter
             nextlevel = False
             screen.blit(bg, (0, 0))
@@ -208,7 +205,6 @@ def main(mapfile=None):
                 crashed = True
 
             for tile in tiles:
-                #if tile.sub.collidepoint(point):
                 if tile.crect.collidepoint(point):
                     c = lvl[tile.coords[0]][tile.coords[1]]
                     if c == '-':
