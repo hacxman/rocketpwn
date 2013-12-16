@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import random
+import argparse
 
 import pygame
 
@@ -10,7 +11,7 @@ dbg = True
 # dbg = False
 
 
-def main():
+def main(mapfile=None):
     pygame.init()
     pygame.display.set_caption('RocketPwn')
     mode = (800, 600)
@@ -22,9 +23,12 @@ def main():
     bg = pygame.Surface(mode)
     bg.fill(colors.t)
 
+
     ships = pygame.sprite.RenderUpdates()
     ui = pygame.sprite.RenderUpdates()
-    with open('lvl/1') as f:
+    if not mapfile:
+        mapfile = 'lvl/1'
+    with open(mapfile) as f:
         lines = f.readlines()
 
     _lvl = map(lambda x: x.strip('\n').ljust(9, ' '), lines[1:])
@@ -71,25 +75,23 @@ def main():
     ships.add(dship)
     running, moving = True, False
     ship.force = 0
-    f_low, f_high = 0.02, 0.04
+    f_low, f_high = 0.02, 0.03
     # hard?
     # f_low, f_high = 0.01, 0.10
     nextforce = random.uniform(f_low, f_high)
     thrust_interval, thrust_duration = 4000, 2000
-    thrust_counter, thrust_dcounter = 1500, 0
+    thrust_counter = 2500
     ticks = 0
 
     while running:
         time_passed = clock.tick(FPS)
         ticks += time_passed
         thrust_counter += time_passed
-        thrust_dcounter += time_passed
         if thrust_counter >= thrust_interval:
             ship.force = nextforce
             nextforce = random.uniform(f_low, f_high)
             nextforce = 0.04
-            thrust_counter = 0
-            thrust_dcounter = 0
+            thrust_counter = random.randrange(0, 1000)
 
         if ship.force > 0:
             ship.force -= 0.0002
@@ -136,4 +138,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--map', help='map FILE', metavar='FILE')
+
+    args = parser.parse_args()
+
+    main(mapfile=args.map)
