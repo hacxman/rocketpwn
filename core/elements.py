@@ -123,16 +123,21 @@ class Progress(pygame.sprite.Sprite):
 
 
 class Tile(pygame.sprite.Sprite):
-    def __init__(self, init_pos, init_size, color=colors.r):
+    def __init__(self, rect, color=colors.t, border=2, margin=6):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface(init_size)
+        self.image = pygame.Surface(rect.size)
         self.image.fill((0, 0, 0))
         self.image.set_colorkey((0, 0, 0))
+        sub = rect.copy()
+        sub.topleft = (0, 0)
+        self.sub = sub.inflate(-margin, -margin)
         pygame.draw.rect(
             self.image,
-            color.t,
-            (0, 0, init_size[0], init_size[1]))
-        self.rect = self.image.get_rect(topleft=init_pos)
+            color,
+            self.sub,
+            border)
+        self.rect = self.image.get_rect(topleft=rect.topleft)
+        self.sub.topleft = self.rect.topleft
 
     def update(self):
         super(Tile, self).update()

@@ -28,6 +28,8 @@ def main(mapfile=None):
 
     ships = pygame.sprite.RenderUpdates()
     ui = pygame.sprite.RenderUpdates()
+    tiles  = pygame.sprite.RenderUpdates()
+
     if not mapfile:
         mapfile = 'lvl/1'
     with open(mapfile) as f:
@@ -45,6 +47,7 @@ def main(mapfile=None):
     s = mode[1] - 120
     map_sq = pygame.rect.Rect(mode[0] - (s + 100), 60, s, s)
     pygame.draw.rect(bg, colors.g, map_sq, 3)
+    map_sq.move_ip(1, 1)
     tile_size = int(1. * s / 9)
     ship_size = int(tile_size * 2 / 3)
     if dbg:
@@ -53,15 +56,19 @@ def main(mapfile=None):
 
     for i in range(0, 9):
         for j in range(0, 9):
-            tile_rect = pygame.rect.Rect(map_sq[0] + tile_size * i, map_sq[1] + tile_size * j, tile_size, tile_size)
-            rect = tile_rect.inflate(-6, -6)
+            rect = pygame.rect.Rect(map_sq[0] + tile_size * i, map_sq[1] + tile_size * j, tile_size, tile_size)
+            t = elements.Tile(rect, colors.t)
+
             if lvl[i][j] == '-':
-                pygame.draw.rect(bg, colors.g, rect, 2)
+                t = elements.Tile(rect, colors.g)
             elif lvl[i][j] == 'T':
-                pygame.draw.rect(bg, colors.r, rect, 2)
+                t = elements.Tile(rect, colors.r)
             elif lvl[i][j] == '>':
-                pygame.draw.rect(bg, colors.dr, rect, 2)
+                t = elements.Tile(rect, colors.dr)
                 ship_init = rect.center
+
+            t.coords = (i, j)
+            tiles.add(t)
 
     thrust_progress = elements.Progress((0, 0), (mode[0], 30), colors.g)
     power_progress = elements.Progress((0, mode[1] - 30), (mode[0], 30), colors.dr)
@@ -148,10 +155,16 @@ def main(mapfile=None):
             if not map_sq.collidepoint(point):
                 collision()
 
+            for tile in tiles:
+                if tile.sub.collidepoint(point):
+                    print tile.coords
+
         ui.clear(screen, bg)
+        tiles.clear(screen, bg)
         ships.clear(screen, bg)
         dirty = ui.draw(screen)
         dirty += ships.draw(screen)
+        dirty += tiles.draw(screen)
         pygame.display.update(dirty)
 
 
