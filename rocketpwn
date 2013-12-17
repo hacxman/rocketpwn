@@ -9,6 +9,8 @@ import pygame
 from core import colors
 from core import elements
 from core.utils import scale
+from core.utils import get_tile_pair_pos
+from core.vector import Vec2d
 
 dbg = True
 dbg = False
@@ -88,25 +90,33 @@ def main(mapfile=None):
             for i, c in enumerate(line):
                 lvl[i] += c
             if dbg:
-                print(line)
+                print("'{}' {}".format(line, len(line)))
 
         for i in range(0, 9):
-                for j in range(0, 9):
-                    rect = pygame.rect.Rect(map_sq[0] + tile_size * i, map_sq[1] + tile_size * j, tile_size, tile_size)
-                    t = elements.Tile(rect, colors.t)
+            for j in range(0, 9):
+                rect = pygame.rect.Rect(map_sq[0] + tile_size * i, map_sq[1] + tile_size * j, tile_size, tile_size)
+                t = elements.Tile(rect, colors.t)
 
-                    if lvl[i][j] == '-':
-                        t = elements.Tile(rect, colors.g)
-                    if lvl[i][j] == 'b':
-                        t = elements.Tile(rect, colors.b)
-                    elif lvl[i][j] == 'T':
-                        t = elements.Tile(rect, colors.r)
-                    elif lvl[i][j] == '>':
-                        t = elements.Tile(rect, colors.dr)
-                        ship_init = rect.center
+                if lvl[i][j] == '-':
+                    t = elements.Tile(rect, colors.g)
+                if lvl[i][j] == 'b':
+                    t = elements.Tile(rect, colors.b)
+                elif lvl[i][j] == 'T':
+                    t = elements.Tile(rect, colors.r)
+                elif lvl[i][j] == '>':
+                    t = elements.Tile(rect, colors.dr)
+                    ship_init = rect.center
+                elif lvl[i][j] in 'NOPQRS':
+                    t = elements.Tile(rect, colors.tel_in['NOPQRS'.index(lvl[i][j])])
+                elif lvl[i][j] in 'nopqrs':
+                    t = elements.Tile(rect, colors.tel_out['nopqrs'.index(lvl[i][j])])
+                elif lvl[i][j] in 'UVWXYZ':
+                    t = elements.Tile(rect, colors.trig_sw['UVWXYZ'.index(lvl[i][j])])
+                elif lvl[i][j] in 'uvwxyz':
+                    t = elements.Tile(rect, colors.trig_p['uvwxyz'.index(lvl[i][j])])
 
-                    t.coords = (i, j)
-                    tiles.add(t)
+                t.coords = (i, j)
+                tiles.add(t)
 
         ship = elements.Ship(ship_init, (1, 0), size=ship_size)
         lrect = pygame.rect.Rect(0, 30, map_sq.topleft[0], mode[1])
@@ -273,7 +283,18 @@ def main(mapfile=None):
                             crashed = True
                         elif c == 'T':
                             nextlevel = True
-
+                        elif c in 'UVWXYZ':
+                            pos = Vec2d(get_tile_pair_pos(c, lvl, tiles).center)
+                            ship.pos = pos
+                        elif c in 'NOPQRS':
+                            _to_remove = []
+                            for i, t in enumerate(tiles):
+                                if lvl[t.coords[0]][t.coords[1]] == c.lower():
+                                    _p0 = lvl[t.coords[0]][:t.coords[1]]
+                                    _p1 = lvl[t.coords[0]][t.coords[1]+1:]
+                                    lvl[t.coords[0]] = _p0+' '+_p1
+                                    _to_remove.append(t)
+                            map(lambda i: tiles.remove(i), _to_remove)
                         break
 
             ui.clear(screen, bg)
