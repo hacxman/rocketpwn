@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import os
+import sys
 import random
 import argparse
 
@@ -22,9 +23,30 @@ def main(mapfile=None):
     FPS = 60
 
     screen = pygame.display.set_mode(map(int, mode))
+    font = pygame.font.Font(None, 30)
+    bigfont = pygame.font.Font(None, 60)
+    smallfont = pygame.font.Font(None, 20)
 
     bg = pygame.Surface(mode)
     bg.fill(colors.t)
+
+    win = pygame.Surface(mode)
+    win.fill(colors.t)
+    wintext = font.render("YOU WIN", 1, colors.g)
+    win.blit(wintext, (mode[0] / 2 - wintext.get_rect().width / 2, mode[1] / 2))
+
+    wel = pygame.Surface(mode)
+    wel.fill(colors.t)
+    weltext = bigfont.render("RocketPwn", 1, colors.g)
+    crewtext = font.render("The crew of your triangle vessel went rogue,", 1, colors.g)
+    crewtext2 = font.render("you only get one thruster to save your ship!", 1, colors.g)
+    keys = font.render("Keys: space to play, q to quit", 1, colors.g)
+    timing = smallfont.render("Timing is everything.", 1, colors.g)
+    wel.blit(weltext, (mode[0] / 2 - weltext.get_rect().width / 2, mode[1] / 4))
+    wel.blit(crewtext, (mode[0] / 2 - crewtext.get_rect().width / 2, mode[1] / 3))
+    wel.blit(crewtext2, (mode[0] / 2 - crewtext2.get_rect().width / 2, mode[1] / 3 + crewtext2.get_rect().height))
+    wel.blit(keys, (mode[0] / 2 - keys.get_rect().width / 2, mode[1] * 2 / 3))
+    wel.blit(timing, (mode[0] / 2 - timing.get_rect().width / 2, mode[1] * 2 / 3 + keys.get_rect().height * 2))
 
     ui = pygame.sprite.RenderUpdates()
     particles = pygame.sprite.RenderUpdates()
@@ -110,13 +132,14 @@ def main(mapfile=None):
     s_thrust_duration = 2000
     thrust_interval, thrust_duration = s_thrust_interval, s_thrust_duration
     thrust_counter = s_thrust_counter
-    crash_counter, crash_delay = 0, 50
+    crash_counter, crash_delay = 0, 0
     ticks = 0
     crashed = False
     won = False
     nextlevel = False
+    welcome = True
 
-    screen.blit(bg, (0, 0))
+    screen.blit(wel, (0, 0))
     clock = pygame.time.Clock()
     pygame.display.flip()
 
@@ -134,30 +157,6 @@ def main(mapfile=None):
 
         time_passed = clock.tick(FPS)
         ticks += time_passed
-        thrust_counter += time_passed
-        if thrust_counter >= thrust_interval:
-            ship.force = nextforce
-            nextforce = random.uniform(f_low, f_high)
-            nextforce = 0.04
-            thrust_counter = random.randrange(0, 1000)
-
-        if ship.force > 0:
-            ship.force -= 0.0002
-            size = int(ship_size * scale(ship.force, 0, f_high, 0.7, 0))
-            if size <= 0:
-                print ship_size, size
-                size = 1
-            particles.add(elements.Particle(
-                (ship.rect.x + ship.te[0], ship.rect.y + ship.te[1]),
-                ship.heading.rotated(180 + random.uniform(0, 1) * 30),
-                colors.r,
-                size=size))
-
-            for p in particles:
-                px, py = p.rect.centerx, p.rect.centery
-                if px < 0 or px > mode[0] or py < 0 or py > mode[1]:
-                    particles.remove(p)
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -166,21 +165,19 @@ def main(mapfile=None):
                 if event.key in (pygame.K_ESCAPE, pygame.K_q):
                     running = False
                     break
+
+                if welcome:
+                    welcome = False
+                    screen.blit(bg, (0, 0))
+                    pygame.display.flip()
+                    break
+
                 if event.key == pygame.K_SPACE:
                     moving = True
+                    if won:
+                        sys.exit(0)
             if event.type == pygame.KEYUP:
                 moving = False
-
-        if moving and not crashed:
-            ship.rotate(5)
-            particles.add(elements.Particle(
-                (ship.rect.x + ship.tt[0], ship.rect.y + ship.tt[1]),
-                ship.heading.rotated(45 + random.uniform(0, 1) * 30),
-                colors.lb,
-                size=10))
-
-        dship.heading = ship.dir
-
         if dbg:
             print "s=%f f=%f" % (ship.speed, ship.force)
             print "Ship dir:%f head:%f" % (ship.dir.angle, ship.heading.angle)
@@ -203,8 +200,60 @@ def main(mapfile=None):
                 pygame.display.flip()
 
             crash_counter += 1
+        elif welcome:
+            pass
+        elif won:
+            print 'uu'
+        elif nextlevel:
+            nextlevel = False
+            num_lvl += 1
+            if num_lvl == 10:
+                won = True
+                num_lvl = 1
+                screen.blit(win, (0, 0))
+            else:
+                mapfile = 'lvl/{}'.format(num_lvl)
+                ship, dship, ships, lvl, tiles = load_level(mapfile)
+                nextforce = random.uniform(f_low, f_high)
+                thrust_interval, thrust_duration = s_thrust_interval, s_thrust_duration
+                thrust_counter = s_thrust_counter
+                screen.blit(bg, (0, 0))
 
+            pygame.display.flip()
         else:
+            thrust_counter += time_passed
+            if thrust_counter >= thrust_interval:
+                ship.force = nextforce
+                nextforce = random.uniform(f_low, f_high)
+                nextforce = 0.04
+                thrust_counter = random.randrange(0, 1000)
+
+            if ship.force > 0:
+                ship.force -= 0.0002
+                size = int(ship_size * scale(ship.force, 0, f_high, 0.7, 0))
+                if size <= 0:
+                    size = 1
+                particles.add(elements.Particle(
+                    (ship.rect.x + ship.te[0], ship.rect.y + ship.te[1]),
+                    ship.heading.rotated(180 + random.uniform(0, 1) * 30),
+                    colors.r,
+                    size=size))
+
+                for p in particles:
+                    px, py = p.rect.centerx, p.rect.centery
+                    if px < 0 or px > mode[0] or py < 0 or py > mode[1]:
+                        particles.remove(p)
+
+            if moving and not crashed:
+                ship.rotate(5)
+                particles.add(elements.Particle(
+                    (ship.rect.x + ship.tt[0], ship.rect.y + ship.tt[1]),
+                    ship.heading.rotated(45 + random.uniform(0, 1) * 30),
+                    colors.lb,
+                    size=10))
+
+            dship.heading = ship.dir
+
             ships.update(time_passed)
             thrust_progress.update(1. * thrust_counter / thrust_interval)
             if ship.force <= 0:
@@ -212,41 +261,30 @@ def main(mapfile=None):
             else:
                 power_progress.update(1 - 10. * ship.force)
 
-        if nextlevel:
-            num_lvl += 1
-            mapfile = 'lvl/{}'.format(num_lvl)
-            ship, dship, ships, lvl, tiles = load_level(mapfile)
-            nextforce = random.uniform(f_low, f_high)
-            thrust_interval, thrust_duration = s_thrust_interval, s_thrust_duration
-            thrust_counter = s_thrust_counter
-            nextlevel = False
-            screen.blit(bg, (0, 0))
-            pygame.display.flip()
+            for point in ship.triangle_points():
+                if not map_sq.collidepoint(point):
+                    crashed = True
 
-        for point in ship.triangle_points():
-            if not map_sq.collidepoint(point):
-                crashed = True
+                for tile in tiles:
+                    if tile.crect.collidepoint(point):
+                        c = lvl[tile.coords[0]][tile.coords[1]]
+                        if c == '-':
+                            crashed = True
+                        elif c == 'T':
+                            nextlevel = True
 
-            for tile in tiles:
-                if tile.crect.collidepoint(point):
-                    c = lvl[tile.coords[0]][tile.coords[1]]
-                    if c == '-':
-                        crashed = True
-                    elif c == 'T':
-                        nextlevel = True
+                        break
 
-                    break
-
-        ui.clear(screen, bg)
-        particles.clear(screen, bg)
-        particles.update(time_passed)
-        tiles.clear(screen, bg)
-        ships.clear(screen, bg)
-        dirty = ui.draw(screen)
-        dirty += tiles.draw(screen)
-        dirty += particles.draw(screen)
-        dirty += ships.draw(screen)
-        pygame.display.update(dirty)
+            ui.clear(screen, bg)
+            particles.clear(screen, bg)
+            particles.update(time_passed)
+            tiles.clear(screen, bg)
+            ships.clear(screen, bg)
+            dirty = ui.draw(screen)
+            dirty += tiles.draw(screen)
+            dirty += particles.draw(screen)
+            dirty += ships.draw(screen)
+            pygame.display.update(dirty)
 
 
 if __name__ == '__main__':
