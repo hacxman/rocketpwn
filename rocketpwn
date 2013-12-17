@@ -19,6 +19,7 @@ def main(mapfile=None):
     pygame.init()
     pygame.display.set_caption('RocketPwn')
     mode = (800, 600)
+    mode = (1200, 700)
     #mode = (1366, 768)
     FPS = 60
 
