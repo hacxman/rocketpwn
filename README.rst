@@ -5,7 +5,7 @@ Requires:
  - pygame
 
 Running:
- - python main or just ./main
+ - python rocketpwn or just ./rocketpwn
 
 Keys:
  - space: rotate
