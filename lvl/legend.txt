@@ -1,0 +1,10 @@
+There are several types of tiles:
+targets  : T
+blue tile: b
+ship     : >
+border   : -
+triggers : NOPQRS
+tr. tgts : nopqrs
+teleports: UVWXYZ
+tel. tgts: uvwxyz
+
