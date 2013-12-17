@@ -13,3 +13,7 @@ def rot_point(point, pivot, angle):
     ny = x * s + y * c
 
     return (nx + pivot[0], ny + pivot[1])
+
+
+def scale(x, a, b, l=0., h=1.):
+    return ((h - l) * (x - b)) / (a - b) + l

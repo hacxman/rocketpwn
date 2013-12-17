@@ -7,6 +7,7 @@ import pygame
 
 from core import colors
 from core import elements
+from core.utils import scale
 
 dbg = True
 dbg = False
@@ -17,7 +18,7 @@ def main(mapfile=None):
     pygame.init()
     pygame.display.set_caption('RocketPwn')
     mode = (800, 600)
-    mode = (1366, 768)
+    #mode = (1366, 768)
     FPS = 60
 
     screen = pygame.display.set_mode(map(int, mode))
@@ -26,6 +27,7 @@ def main(mapfile=None):
     bg.fill(colors.t)
 
     ui = pygame.sprite.RenderUpdates()
+    particles = pygame.sprite.RenderUpdates()
 
     if not mapfile:
         mapfile = 'lvl/1'
@@ -85,7 +87,7 @@ def main(mapfile=None):
 
         ship = elements.Ship(ship_init, (1, 0), size=ship_size)
         lrect = pygame.rect.Rect(0, 30, map_sq.topleft[0], mode[1])
-        dship = elements.Ship((lrect.centerx, lrect.height/3), (0, 1), color=colors.r, size=ship_size * 2)
+        dship = elements.Ship((lrect.centerx, lrect.height / 3), (0, 1), color=colors.r, size=ship_size * 2)
         ships.add(ship)
         ships.add(dship)
 
@@ -141,6 +143,20 @@ def main(mapfile=None):
 
         if ship.force > 0:
             ship.force -= 0.0002
+            size = int(ship_size * scale(ship.force, 0, f_high, 0.7, 0))
+            if size <= 0:
+                print ship_size, size
+                size = 1
+            particles.add(elements.Particle(
+                (ship.rect.x + ship.te[0], ship.rect.y + ship.te[1]),
+                ship.heading.rotated(180 + random.uniform(0, 1) * 30),
+                colors.r,
+                size=size))
+
+            for p in particles:
+                px, py = p.rect.centerx, p.rect.centery
+                if px < 0 or px > mode[0] or py < 0 or py > mode[1]:
+                    particles.remove(p)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -155,8 +171,13 @@ def main(mapfile=None):
             if event.type == pygame.KEYUP:
                 moving = False
 
-        if moving:
+        if moving and not crashed:
             ship.rotate(5)
+            particles.add(elements.Particle(
+                (ship.rect.x + ship.tt[0], ship.rect.y + ship.tt[1]),
+                ship.heading.rotated(45 + random.uniform(0, 1) * 30),
+                colors.lb,
+                size=10))
 
         dship.heading = ship.dir
 
@@ -184,7 +205,7 @@ def main(mapfile=None):
             crash_counter += 1
 
         else:
-            ships.update(time_passed, None)
+            ships.update(time_passed)
             thrust_progress.update(1. * thrust_counter / thrust_interval)
             if ship.force <= 0:
                 power_progress.update(1 - 10. * nextforce)
@@ -217,11 +238,14 @@ def main(mapfile=None):
                     break
 
         ui.clear(screen, bg)
+        particles.clear(screen, bg)
+        particles.update(time_passed)
         tiles.clear(screen, bg)
         ships.clear(screen, bg)
         dirty = ui.draw(screen)
-        dirty += ships.draw(screen)
         dirty += tiles.draw(screen)
+        dirty += particles.draw(screen)
+        dirty += ships.draw(screen)
         pygame.display.update(dirty)
 
 
